@@ -10,6 +10,8 @@
 'use strict';
 
 import _ from 'lodash';
+
+var http = require('http');
 var Thing = require('./thing.model');
 
 function handleError(res, statusCode) {
@@ -17,6 +19,23 @@ function handleError(res, statusCode) {
   return function(err) {
     res.status(statusCode).send(err);
   };
+}
+
+function getGeoCode (data, callback) {
+
+	var address = (data.number + ' ' || '') + data.street + ', ' + data.postcode + ' ' + data.city;
+	var API_KEY = "AIzaSyAI0JQ-xOmt1j1XCDRiGYfdS4rtkqaarx0";
+	var request = "http://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&sensor=false&key=" + API_KEY; 
+
+	http.get(request, (res) => {
+		console.log(`Got response: ${res.statusCode}`);
+		var data = JSON.parse(res.body);
+		//res.resume();
+		callback(data.geometry.location.lat, data.geometry.location.lng, true);
+	}).on('error', (e) => {
+		console.log(`Got error: ${e.message}`);
+		callback(null, null, false);
+	});
 }
 
 function responseWithResult(res, statusCode) {
@@ -39,6 +58,12 @@ function handleEntityNotFound(res) {
 }
 
 function saveUpdates(updates) {
+
+	getGeoCode(updates, function (lat, lon, no_error) {
+		updates.latitude = lat;
+		updates.longitude = lon;
+	});
+	// async pb here
   return function(entity) {
     var updated = _.merge(entity, updates);
     return updated.saveAsync()
@@ -76,9 +101,25 @@ export function show(req, res) {
 
 // Creates a new Thing in the DB
 export function create(req, res) {
-  Thing.createAsync(req.body)
-    .then(responseWithResult(res, 201))
-    .catch(handleError(res));
+
+	for (var i = 0; i < req.body.length; i++) {
+
+		getGeoCode(req.body, function (lat, lon, no_error) {
+
+			if (no_error) {
+
+				req.body[i].latitude = lat;
+				req.body[i].longitude = lon;
+
+				Thing.createAsync(req.body[i])
+				.then(saveUpdates(req.body[i]))
+				.then(responseWithResult(res, 201))
+				.catch(handleError(res));    
+			} else {
+				responseWithResult(res, 400)(true);
+			}
+		})
+	}
 }
 
 // Updates an existing Thing in the DB
