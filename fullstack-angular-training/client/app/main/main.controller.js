@@ -17,7 +17,10 @@
         socket.unsyncUpdates('thing');
       });
     }
-
+    
+    sayHello(id) {
+      alert("Saalout !! " + id);
+    }
     addThing() {
       if (this.newThing) {
         if (this.newThingInfo)

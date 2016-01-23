@@ -9,6 +9,10 @@
 </header>
 
 <div class="container">
+  <ul ng-repeat="thing in main.awesomeThings">
+    <li ng-click="main.sayHello($index)" style='background-color:#aaa'><span  style='background-color:#999'>Eric Delanghe: </span><span> 5 rue andree rivoir 92240 malakoff</span></li>
+  </ul>
+  
   <div class="row">
     <div class="col-lg-12">
       <h1 class="page-header">Features:</h1>
