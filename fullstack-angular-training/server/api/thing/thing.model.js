@@ -3,9 +3,14 @@
 var mongoose = require('bluebird').promisifyAll(require('mongoose'));
 
 var ThingSchema = new mongoose.Schema({
-  name: String,
-  info: String,
-  active: Boolean
+	number: Number,
+	street: String,
+	city: String,
+	postcode: Number,
+	firstname: String,
+	lastname: String,
+    	latitude: Number,
+    	longitude: Number
 });
 
 export default mongoose.model('Thing', ThingSchema);
